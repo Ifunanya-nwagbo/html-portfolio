@@ -1,2 +1,2 @@
-# html-portfolio
-My HTML portfolio
+# ifunanya coding-portfolio
+ifunanya coding portfolio
