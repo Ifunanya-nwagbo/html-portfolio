@@ -1,0 +1,1355 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
+public class InteractiveCalendarApp {
+    private static LocalDate referenceDate = LocalDate.now();
+    private static LocalDate displayedDate = LocalDate.now();
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Interactive Calendar");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(400, 400);
+            frame.setLayout(new BorderLayout());
+
+            // Date format
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            // Input field for date
+            JTextField dateField = new JTextField(10);
+            dateField.setText(displayedDate.format(dateFormatter));
+            JPanel inputPanel = new JPanel();
+            inputPanel.add(new JLabel("Date (YYYY-MM-DD):"));
+            inputPanel.add(dateField);
+            JButton setRefButton = new JButton("Set as Ref...");
+            inputPanel.add(setRefButton);
+            frame.add(inputPanel, BorderLayout.NORTH);
+
+            // Calendar display
+            JPanel calendarPanel = new JPanel();
+            frame.add(calendarPanel, BorderLayout.CENTER);
+
+            // Time from Reference Date
+            JLabel timeFromRefLabel = new JLabel("Time from Reference Date: ");
+            JLabel timeFromRefValue = new JLabel("0 days");
+            JPanel timePanel = new JPanel();
+            timePanel.add(timeFromRefLabel);
+            timePanel.add(timeFromRefValue);
+            frame.add(timePanel, BorderLayout.SOUTH);
+
+            // Method to update calendar
+            ActionListener updateCalendar = e -> {
+                String dateText = dateField.getText();
+                try {
+                    displayedDate = LocalDate.parse(dateText, dateFormatter);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(frame, "Invalid date format. Use YYYY-MM-DD.");
+                    return;
+                }
+                updateCalendarDisplay(calendarPanel);
+                updateTimeFromReference(timeFromRefValue);
+            };
+
+            // Update reference date
+            setRefButton.addActionListener(e -> {
+                String dateText = dateField.getText();
+                try {
+                    referenceDate = LocalDate.parse(dateText, dateFormatter);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(frame, "Invalid date format. Use YYYY-MM-DD.");
+                    return;
+                }
+                updateCalendarDisplay(calendarPanel);
+                updateTimeFromReference(timeFromRefValue);
+            });
+
+            // Update calendar display on startup
+            updateCalendarDisplay(calendarPanel);
+            updateTimeFromReference(timeFromRefValue);
+
+            // Update displayed date when Enter is pressed
+            dateField.addActionListener(updateCalendar);
+
+            frame.setVisible(true);
+        });
+    }
+
+    private static void updateCalendarDisplay(JPanel calendarPanel) {
+        calendarPanel.removeAll();
+        LocalDate firstDayOfMonth = displayedDate.withDayOfMonth(1);
+        LocalDate lastDayOfMonth = displayedDate.withDayOfMonth(displayedDate.lengthOfMonth());
+
+        // Create month and year label
+        JLabel monthYearLabel = new JLabel(displayedDate.getMonth() + " " + displayedDate.getYear(), JLabel.CENTER);
+        calendarPanel.add(monthYearLabel);
+
+        // Create day headers
+        String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        JPanel daysPanel = new JPanel(new GridLayout(1, 7));
+        for (String day : days) {
+            daysPanel.add(new JLabel(day, JLabel.CENTER));
+        }
+        calendarPanel.add(daysPanel);
+
+        // Create day numbers
+        JPanel daysNumbersPanel = new JPanel(new GridLayout(0, 7));
+        LocalDate day = firstDayOfMonth.minusDays(firstDayOfMonth.getDayOfWeek().getValue() % 7);
+        for (int i = 0; i < 42; i++) {
+            JLabel dayLabel = new JLabel(String.valueOf(day.getDayOfMonth()), JLabel.CENTER);
+            if (day.getMonth() != displayedDate.getMonth()) {
+                dayLabel.setForeground(Color.GRAY);
+            } else if (day.equals(displayedDate)) {
+                dayLabel.setForeground(Color.RED);
+            }
+            daysNumbersPanel.add(dayLabel);
+            day = day.plusDays(1);
+        }
+        calendarPanel.add(daysNumbersPanel);
+        calendarPanel.revalidate();
+        calendarPanel.repaint();
+    }
+
+    private static void updateTimeFromReference(JLabel timeFromRefValue) {
+        long daysBetween = ChronoUnit.DAYS.between(referenceDate.atStartOfDay(), displayedDate.atStartOfDay());
+        timeFromRefValue.setText(daysBetween + " days");
+    }
+}
+
+
+EXPLANATION 
+
+Imports and Class Definitionimport javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+
+public class InteractiveCalendarApp {
+    private static LocalDate referenceDate = LocalDate.now();
+    private static LocalDate displayedDate = LocalDate.now();Imports: We import classes for GUI components (javax.swing.*), layout management (java.awt.*), event handling (java.awt.event.*), and date/time operations (java.time.*).Class Definition: The class InteractiveCalendarApp contains the application logic. Static variables referenceDate and displayedDate are initialized to the current date.2. Main Method and Swing Initializationpublic static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+        JFrame frame = new JFrame("Interactive Calendar");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 400);
+        frame.setLayout(new BorderLayout());Main Method: The entry point of the program.SwingUtilities.invokeLater: Ensures that the GUI creation is done on the Event Dispatch Thread (EDT) for thread safety.JFrame: Main window of the application. It is titled "Interactive Calendar" and is set to close on exit. The layout is set to BorderLayout.3. GUI Components SetupDateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+JTextField dateField = new JTextField(10);
+dateField.setText(displayedDate.format(dateFormatter));
+JPanel inputPanel = new JPanel();
+inputPanel.add(new JLabel("Date (YYYY-MM-DD):"));
+inputPanel.add(dateField);
+JButton setRefButton = new JButton("Set as Ref...");
+inputPanel.add(setRefButton);
+frame.add(inputPanel, BorderLayout.NORTH);Date Formatter: DateTimeFormatter is used to format and parse dates.Date Input Field: JTextField where users can input dates.Input Panel: A JPanel to hold the label, text field, and button. It is added to the top of the frame.4. Calendar Display and Time CalculationJPanel calendarPanel = new JPanel();
+frame.add(calendarPanel, BorderLayout.CENTER);
+
+JLabel timeFromRefLabel = new JLabel("Time from Reference Date: ");
+JLabel timeFromRefValue = new JLabel("0 days");
+JPanel timePanel = new JPanel();
+timePanel.add(timeFromRefLabel);
+timePanel.add(timeFromRefValue);
+frame.add(timePanel, BorderLayout.SOUTH);Calendar Panel: A JPanel that will display the calendar.Time from Reference Panel: Displays the elapsed time between the reference date and the displayed date.5. Action Listener for Calendar UpdateActionListener updateCalendar = e -> {
+    String dateText = dateField.getText();
+    try {
+        displayedDate = LocalDate.parse(dateText, dateFormatter);
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(frame, "Invalid date format. Use YYYY-MM-DD.");
+        return;
+    }
+    updateCalendarDisplay(calendarPanel);
+    updateTimeFromReference(timeFromRefValue);
+};Update Calendar Listener: This ActionListener updates the displayedDate based on user input, catches parsing errors, and updates the calendar and time display.6. Setting Reference DatesetRefButton.addActionListener(e -> {
+    String dateText = dateField.getText();
+    try {
+        referenceDate = LocalDate.parse(dateText, dateFormatter);
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(frame, "Invalid date format. Use YYYY-MM-DD.");
+        return;
+    }
+    updateCalendarDisplay(calendarPanel);
+    updateTimeFromReference(timeFromRefValue);
+});Set Reference Date Listener: Updates referenceDate based on user input and refreshes the calendar and time display.7. Initial Calendar and Time DisplayupdateCalendarDisplay(calendarPanel);
+updateTimeFromReference(timeFromRefValue);
+dateField.addActionListener(updateCalendar);
+
+frame.setVisible(true);Initial Setup: Updates the calendar and time displays with initial values and makes the frame visible.8. Calendar Display Update Methodprivate static void updateCalendarDisplay(JPanel calendarPanel) {
+    calendarPanel.removeAll();
+    LocalDate firstDayOfMonth = displayedDate.withDayOfMonth(1);
+    LocalDate lastDayOfMonth = displayedDate.withDayOfMonth(displayedDate.lengthOfMonth());
+
+    JLabel monthYearLabel = new JLabel(displayedDate.getMonth() + " " + displayedDate.getYear(), JLabel.CENTER);
+    calendarPanel.add(monthYearLabel);
+
+    String[] days = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    JPanel daysPanel = new JPanel(new GridLayout(1, 7));
+    for (String day : days) {
+        daysPanel.add(new JLabel(day, JLabel.CENTER));
+    }
+    calendarPanel.add(daysPanel);
+
+    JPanel daysNumbersPanel = new JPanel(new GridLayout(0, 7));
+    LocalDate day = firstDayOfMonth.minusDays(firstDayOfMonth.getDayOfWeek().getValue() % 7);
+    for (int i = 0; i < 42; i++) {
+        JLabel dayLabel = new JLabel(String.valueOf(day.getDayOfMonth()), JLabel.CENTER);
+        if (day.getMonth() != displayedDate.getMonth()) {
+            dayLabel.setForeground(Color.GRAY);
+        } else if (day.equals(displayedDate)) {
+            dayLabel.setForeground(Color.RED);
+        }
+        daysNumbersPanel.add(dayLabel);
+        day = day.plusDays(1);
+    }
+    calendarPanel.add(daysNumbersPanel);
+    calendarPanel.revalidate();
+    calendarPanel.repaint();
+}Update Calendar Display: This method generates the calendar for the displayed month. It handles:Month and Year Header: Displays the current month and year.Day Headers: Adds day labels (Sun, Mon, etc.).Day Numbers: Fills in the days of the month, adjusting for days that fall outside the displayed month.9. Time Calculation Update Methodprivate static void updateTimeFromReference(JLabel timeFromRefValue) {
+    long daysBetween = ChronoUnit.DAYS.between(referenceDate.atStartOfDay(), displayedDate.atStartOfDay());
+    timeFromRefValue.setText(daysBetween + " days");
+}Update Time Calculation: Calculates the number of days between the referenceDate and displayedDate and updates the label accordingly.SummaryThe application creates an interactive calendar interface using Swing. It allows users to:View and set a reference date.Enter a new date to display and update the calendar.Calculate and show the elapsed days between the reference date and the displayed date.
+
+
+
+NUMBER 4
+mport javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Random;
+
+public class AnimatedCircles extends JPanel implements ActionListener {
+    private final int numCircles;
+    private final int minSize;
+    private final int maxSize;
+    private final Circle[] circles;
+    private final Timer timer;
+
+    public AnimatedCircles(int numCircles, int minSize, int maxSize) {
+        this.numCircles = numCircles;
+        this.minSize = minSize;
+        this.maxSize = maxSize;
+        this.circles = new Circle[numCircles];
+        this.timer = new Timer(16, this); // roughly 60 frames per second
+
+        Random rand = new Random();
+        for (int i = 0; i < numCircles; i++) {
+            int size = rand.nextInt(maxSize - minSize + 1) + minSize;
+            int x = rand.nextInt(800 - size);
+            int y = rand.nextInt(600 - size);
+            int dx = rand.nextInt(5) + 1; // Random velocity between 1 and 5
+            int dy = rand.nextInt(5) + 1; // Random velocity between 1 and 5
+            Color color = new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
+            circles[i] = new Circle(x, y, size, dx, dy, color);
+        }
+
+        timer.start();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        for (Circle circle : circles) {
+            g.setColor(circle.color);
+            g.fillOval(circle.x, circle.y, circle.size, circle.size);
+        }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        for (Circle circle : circles) {
+            circle.x += circle.dx;
+            circle.y += circle.dy;
+
+            // Check for collision with window boundaries
+            if (circle.x < 0 || circle.x + circle.size > getWidth()) {
+                circle.dx = -circle.dx;
+                circle.x = Math.max(0, Math.min(getWidth() - circle.size, circle.x));
+            }
+            if (circle.y < 0 || circle.y + circle.size > getHeight()) {
+                circle.dy = -circle.dy;
+                circle.y = Math.max(0, Math.min(getHeight() - circle.size, circle.y));
+            }
+        }
+        repaint();
+    }
+
+    private static class Circle {
+        int x, y, size, dx, dy;
+        Color color;
+
+        Circle(int x, int y, int size, int dx, int dy, Color color) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.dx = dx;
+            this.dy = dy;
+            this.color = color;
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            String numCirclesStr = JOptionPane.showInputDialog("Enter number of circles:");
+            int numCircles = Integer.parseInt(numCirclesStr);
+            String sizeRangeStr = JOptionPane.showInputDialog("Enter the range of sizes (e.g., 20-35):");
+            String[] sizeRange = sizeRangeStr.split("-");
+            int minSize = Integer.parseInt(sizeRange[0]);
+            int maxSize = Integer.parseInt(sizeRange[1]);
+
+            JFrame frame = new JFrame("Animated Circles");
+            AnimatedCircles panel = new AnimatedCircles(numCircles, minSize, maxSize);
+            frame.add(panel);
+            frame.setSize(800, 600);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        });
+    }
+}
+
+
+EXPLANATION 
+
+The code creates a simple animation application in Java using Swing, where circles of random sizes and colors move around and bounce off the edges of a window.1. Imports and Class Definitionimport javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Random;javax.swing.*: Imports Swing components like JFrame, JPanel, and JOptionPane.java.awt.*: Imports AWT classes for drawing (e.g., Graphics, Color).java.awt.event.*: Imports event handling classes.java.util.Random: Imports the Random class for generating random values.The AnimatedCircles class extends JPanel to create a custom panel where the circles will be drawn. It also implements ActionListener to handle animation timing.2. Instance Variables and Constructorpublic class AnimatedCircles extends JPanel implements ActionListener {
+    private final int numCircles;
+    private final int minSize;
+    private final int maxSize;
+    private final Circle[] circles;
+    private final Timer timer;numCircles: The number of circles to be animated.minSize and maxSize: The range of possible sizes for the circles.circles: An array of Circle objects that represent each circle's properties.timer: A Timer object that triggers animation updates.public AnimatedCircles(int numCircles, int minSize, int maxSize) {
+        this.numCircles = numCircles;
+        this.minSize = minSize;
+        this.maxSize = maxSize;
+        this.circles = new Circle[numCircles];
+        this.timer = new Timer(16, this); // roughly 60 frames per secondThe constructor initializes the number of circles, their size range, and sets up the circles array and Timer.Random rand = new Random();
+        for (int i = 0; i < numCircles; i++) {
+            int size = rand.nextInt(maxSize - minSize + 1) + minSize;
+            int x = rand.nextInt(800 - size);
+            int y = rand.nextInt(600 - size);
+            int dx = rand.nextInt(5) + 1; // Random velocity between 1 and 5
+            int dy = rand.nextInt(5) + 1; // Random velocity between 1 and 5
+            Color color = new Color(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
+            circles[i] = new Circle(x, y, size, dx, dy, color);
+        }
+
+        timer.start();
+    }Initializes each circle with a random position, size, velocity, and color. The Timer object is started to begin the animation.3. paintComponent Method@Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        for (Circle circle : circles) {
+            g.setColor(circle.color);
+            g.fillOval(circle.x, circle.y, circle.size, circle.size);
+        }
+    }paintComponent(Graphics g): This method is overridden to draw the circles on the panel. It calls super.paintComponent(g) to ensure the panel is properly rendered, then iterates through each circle and draws it with its color.4. actionPerformed Method@Override
+    public void actionPerformed(ActionEvent e) {
+        for (Circle circle : circles) {
+            circle.x += circle.dx;
+            circle.y += circle.dy;
+
+            // Check for collision with window boundaries
+            if (circle.x < 0 || circle.x + circle.size > getWidth()) {
+                circle.dx = -circle.dx;
+                circle.x = Math.max(0, Math.min(getWidth() - circle.size, circle.x));
+            }
+            if (circle.y < 0 || circle.y + circle.size > getHeight()) {
+                circle.dy = -circle.dy;
+                circle.y = Math.max(0, Math.min(getHeight() - circle.size, circle.y));
+            }
+        }
+        repaint();
+    }actionPerformed(ActionEvent e): This method is called by the Timer at regular intervals. It updates the position of each circle based on its velocity, checks for collisions with the window edges, and reverses the direction if a collision occurs. It then calls repaint() to update the display.5. Circle Classprivate static class Circle {
+        int x, y, size, dx, dy;
+        Color color;
+
+        Circle(int x, int y, int size, int dx, int dy, Color color) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.dx = dx;
+            this.dy = dy;
+            this.color = color;
+        }
+    }Circle: A helper class to store the properties of each circle, including position, size, velocity, and color.6. main Methodpublic static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            String numCirclesStr = JOptionPane.showInputDialog("Enter number of circles:");
+            int numCircles = Integer.parseInt(numCirclesStr);
+            String sizeRangeStr = JOptionPane.showInputDialog("Enter the range of sizes (e.g., 20-35):");
+            String[] sizeRange = sizeRangeStr.split("-");
+            int minSize = Integer.parseInt(sizeRange[0]);
+            int maxSize = Integer.parseInt(sizeRange[1]);
+
+            JFrame frame = new JFrame("Animated Circles");
+            AnimatedCircles panel = new AnimatedCircles(numCircles, minSize, maxSize);
+            frame.add(panel);
+            frame.setSize(800, 600);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        });
+    }main: Entry point of the program. It uses JOptionPane to get user input for the number of circles and size range. It creates and displays the JFrame, adds an instance of AnimatedCircles to it, and sets the window size and close operation.SummaryThis program creates an animated display of circles moving within a window. Each circle has random size, position, velocity, and color. The animation is handled by a Timer that updates circle positions and checks for collisions with the window edges.
+NUMBER 3
+public final class Complex {
+    private final double real;
+    private final double imaginary;
+
+    public Complex(double real, double imaginary) {
+        this.real = real;
+        this.imaginary = imaginary;
+    }
+
+    public double getReal() {
+        return real;
+    }
+
+    public double getImaginary() {
+        return imaginary;
+    }
+
+    // Instance methods
+    public Complex add(Complex other) {
+        return new Complex(this.real + other.real, this.imaginary + other.imaginary);
+    }
+
+    public Complex subtract(Complex other) {
+        return new Complex(this.real - other.real, this.imaginary - other.imaginary);
+    }
+
+    public Complex multiply(Complex other) {
+        return new Complex(this.real * other.real - this.imaginary * other.imaginary,
+                           this.real * other.imaginary + this.imaginary * other.real);
+    }
+
+    public Complex divide(Complex other) {
+        double denominator = other.real * other.real + other.imaginary * other.imaginary;
+        return new Complex((this.real * other.real + this.imaginary * other.imaginary) / denominator,
+                           (this.imaginary * other.real - this.real * other.imaginary) / denominator);
+    }
+
+    public double magnitude() {
+        return Math.sqrt(real * real + imaginary * imaginary);
+    }
+
+    public double angle() {
+        return Math.atan2(imaginary, real);
+    }
+
+    public Complex conjugate() {
+        return new Complex(this.real, -this.imaginary);
+    }
+
+    // Static methods for overloading
+    public static Complex add(Complex a, Complex b) {
+        return a.add(b);
+    }
+
+    public static Complex subtract(Complex a, Complex b) {
+        return a.subtract(b);
+    }
+
+    public static Complex multiply(Complex a, Complex b) {
+        return a.multiply(b);
+    }
+
+    public static Complex divide(Complex a, Complex b) {
+        return a.divide(b);
+    }
+
+    public static double magnitude(Complex c) {
+        return c.magnitude();
+    }
+
+    public static double angle(Complex c) {
+        return c.angle();
+    }
+
+    public static Complex conjugate(Complex c) {
+        return c.conjugate();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.2f %s %.2fi", real, (imaginary >= 0 ? "+" : "-"), Math.abs(imaginary));
+    }
+}
+
+
+TESTER 
+
+import java.util.Scanner;
+
+public class Tester {
+    private static Complex accumulator = new Complex(0, 0);
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Complex Number Calculator");
+        System.out.println("Commands:");
+        System.out.println("add <real> <imaginary> - Adds a complex number");
+        System.out.println("subtract <real> <imaginary> - Subtracts a complex number");
+        System.out.println("multiply <real> <imaginary> - Multiplies with a complex number");
+        System.out.println("divide <real> <imaginary> - Divides by a complex number");
+        System.out.println("magnitude - Displays the magnitude of the accumulator");
+        System.out.println("conjugate - Finds the conjugate of the accumulator");
+        System.out.println("exit - Exits the application");
+
+        while (true) {
+            System.out.print("Enter command: ");
+            String input = scanner.nextLine();
+            String[] parts = input.split(" ");
+
+            switch (parts[0].toLowerCase()) {
+                case "add":
+                case "subtract":
+                case "multiply":
+                case "divide":
+                    if (parts.length != 3) {
+                        System.out.println("Invalid command format. Usage: <operation> <real> <imaginary>");
+                        break;
+                    }
+                    double real = Double.parseDouble(parts[1]);
+                    double imaginary = Double.parseDouble(parts[2]);
+                    Complex inputComplex = new Complex(real, imaginary);
+                    switch (parts[0].toLowerCase()) {
+                        case "add":
+                            accumulator = Complex.add(accumulator, inputComplex);
+                            break;
+                        case "subtract":
+                            accumulator = Complex.subtract(accumulator, inputComplex);
+                            break;
+                        case "multiply":
+                            accumulator = Complex.multiply(accumulator, inputComplex);
+                            break;
+                        case "divide":
+                            if (inputComplex.getReal() == 0 && inputComplex.getImaginary() == 0) {
+                                System.out.println("Cannot divide by zero.");
+                                break;
+                            }
+                            accumulator = Complex.divide(accumulator, inputComplex);
+                            break;
+                    }
+                    System.out.println("Accumulator: " + accumulator);
+                    break;
+
+                case "magnitude":
+                    System.out.println("Magnitude: " + accumulator.magnitude());
+                    break;
+
+                case "conjugate":
+                    accumulator = Complex.conjugate(accumulator);
+                    System.out.println("Accumulator (conjugate): " + accumulator);
+                    break;
+
+                case "exit":
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Unknown command. Type 'exit' to quit.");
+            }
+        }
+    }
+}
+
+
+
+Here is a Java implementation for the interactive console application to work with complex numbers as specified. 
+
+### `Complex` Class
+
+This class models a complex number and provides the required operations and methods.
+
+```java
+public final class Complex {
+    private final double real;
+    private final double imaginary;
+
+    public Complex(double real, double imaginary) {
+        this.real = real;
+        this.imaginary = imaginary;
+    }
+
+    public double getReal() {
+        return real;
+    }
+
+    public double getImaginary() {
+        return imaginary;
+    }
+
+    // Instance methods
+    public Complex add(Complex other) {
+        return new Complex(this.real + other.real, this.imaginary + other.imaginary);
+    }
+
+    public Complex subtract(Complex other) {
+        return new Complex(this.real - other.real, this.imaginary - other.imaginary);
+    }
+
+    public Complex multiply(Complex other) {
+        return new Complex(this.real * other.real - this.imaginary * other.imaginary,
+                           this.real * other.imaginary + this.imaginary * other.real);
+    }
+
+    public Complex divide(Complex other) {
+        double denominator = other.real * other.real + other.imaginary * other.imaginary;
+        return new Complex((this.real * other.real + this.imaginary * other.imaginary) / denominator,
+                           (this.imaginary * other.real - this.real * other.imaginary) / denominator);
+    }
+
+    public double magnitude() {
+        return Math.sqrt(real * real + imaginary * imaginary);
+    }
+
+    public double angle() {
+        return Math.atan2(imaginary, real);
+    }
+
+    public Complex conjugate() {
+        return new Complex(this.real, -this.imaginary);
+    }
+
+    // Static methods for overloading
+    public static Complex add(Complex a, Complex b) {
+        return a.add(b);
+    }
+
+    public static Complex subtract(Complex a, Complex b) {
+        return a.subtract(b);
+    }
+
+    public static Complex multiply(Complex a, Complex b) {
+        return a.multiply(b);
+    }
+
+    public static Complex divide(Complex a, Complex b) {
+        return a.divide(b);
+    }
+
+    public static double magnitude(Complex c) {
+        return c.magnitude();
+    }
+
+    public static double angle(Complex c) {
+        return c.angle();
+    }
+
+    public static Complex conjugate(Complex c) {
+        return c.conjugate();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.2f %s %.2fi", real, (imaginary >= 0 ? "+" : "-"), Math.abs(imaginary));
+    }
+}
+```
+
+### `Tester` Class
+
+This class provides the interactive console application for performing operations on `Complex` numbers.
+
+```java
+import java.util.Scanner;
+
+public class Tester {
+    private static Complex accumulator = new Complex(0, 0);
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Complex Number Calculator");
+        System.out.println("Commands:");
+        System.out.println("add <real> <imaginary> - Adds a complex number");
+        System.out.println("subtract <real> <imaginary> - Subtracts a complex number");
+        System.out.println("multiply <real> <imaginary> - Multiplies with a complex number");
+        System.out.println("divide <real> <imaginary> - Divides by a complex number");
+        System.out.println("magnitude - Displays the magnitude of the accumulator");
+        System.out.println("conjugate - Finds the conjugate of the accumulator");
+        System.out.println("exit - Exits the application");
+
+        while (true) {
+            System.out.print("Enter command: ");
+            String input = scanner.nextLine();
+            String[] parts = input.split(" ");
+
+            switch (parts[0].toLowerCase()) {
+                case "add":
+                case "subtract":
+                case "multiply":
+                case "divide":
+                    if (parts.length != 3) {
+                        System.out.println("Invalid command format. Usage: <operation> <real> <imaginary>");
+                        break;
+                    }
+                    double real = Double.parseDouble(parts[1]);
+                    double imaginary = Double.parseDouble(parts[2]);
+                    Complex inputComplex = new Complex(real, imaginary);
+                    switch (parts[0].toLowerCase()) {
+                        case "add":
+                            accumulator = Complex.add(accumulator, inputComplex);
+                            break;
+                        case "subtract":
+                            accumulator = Complex.subtract(accumulator, inputComplex);
+                            break;
+                        case "multiply":
+                            accumulator = Complex.multiply(accumulator, inputComplex);
+                            break;
+                        case "divide":
+                            if (inputComplex.getReal() == 0 && inputComplex.getImaginary() == 0) {
+                                System.out.println("Cannot divide by zero.");
+                                break;
+                            }
+                            accumulator = Complex.divide(accumulator, inputComplex);
+                            break;
+                    }
+                    System.out.println("Accumulator: " + accumulator);
+                    break;
+
+                case "magnitude":
+                    System.out.println("Magnitude: " + accumulator.magnitude());
+                    break;
+
+                case "conjugate":
+                    accumulator = Complex.conjugate(accumulator);
+                    System.out.println("Accumulator (conjugate): " + accumulator);
+                    break;
+
+                case "exit":
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Unknown command. Type 'exit' to quit.");
+            }
+        }
+    }
+}
+```
+
+### Explanation
+1. **`Complex` Class**:
+   - Models a complex number with `real` and `imaginary` parts.
+   - Provides methods to perform arithmetic operations and calculate magnitude, angle, and conjugate.
+   - Includes static methods to perform operations without needing an instance.
+
+2. **`Tester` Class**:
+   - Provides an interactive console for user input.
+   - Executes commands to modify or display the state of the `accumulator` (current complex number).
+   - Handles operations based on user input and prints results.
+
+You can compile and run these classes to interactively work with complex numbers in your console application.
+
+
+NUMBER 3
+ublic final class Complex {
+    private final double real;
+    private final double imaginary;
+
+    public Complex(double real, double imaginary) {
+        this.real = real;
+        this.imaginary = imaginary;
+    }
+
+    public double getReal() {
+        return real;
+    }
+
+    public double getImaginary() {
+        return imaginary;
+    }
+
+    // Instance methods
+    public Complex add(Complex other) {
+        return new Complex(this.real + other.real, this.imaginary + other.imaginary);
+    }
+
+    public Complex subtract(Complex other) {
+        return new Complex(this.real - other.real, this.imaginary - other.imaginary);
+    }
+
+    public Complex multiply(Complex other) {
+        return new Complex(this.real * other.real - this.imaginary * other.imaginary,
+                           this.real * other.imaginary + this.imaginary * other.real);
+    }
+
+    public Complex divide(Complex other) {
+        double denominator = other.real * other.real + other.imaginary * other.imaginary;
+        return new Complex((this.real * other.real + this.imaginary * other.imaginary) / denominator,
+                           (this.imaginary * other.real - this.real * other.imaginary) / denominator);
+    }
+
+    public double magnitude() {
+        return Math.sqrt(real * real + imaginary * imaginary);
+    }
+
+    public double angle() {
+        return Math.atan2(imaginary, real);
+    }
+
+    public Complex conjugate() {
+        return new Complex(this.real, -this.imaginary);
+    }
+
+    // Static methods for overloading
+    public static Complex add(Complex a, Complex b) {
+        return a.add(b);
+    }
+
+    public static Complex subtract(Complex a, Complex b) {
+        return a.subtract(b);
+    }
+
+    public static Complex multiply(Complex a, Complex b) {
+        return a.multiply(b);
+    }
+
+    public static Complex divide(Complex a, Complex b) {
+        return a.divide(b);
+    }
+
+    public static double magnitude(Complex c) {
+        return c.magnitude();
+    }
+
+    public static double angle(Complex c) {
+        return c.angle();
+    }
+
+    public static Complex conjugate(Complex c) {
+        return c.conjugate();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.2f %s %.2fi", real, (imaginary >= 0 ? "+" : "-"), Math.abs(imaginary));
+    }
+}
+
+
+TESTER 
+
+import java.util.Scanner;
+
+public class Tester {
+    private static Complex accumulator = new Complex(0, 0);
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Complex Number Calculator");
+        System.out.println("Commands:");
+        System.out.println("add <real> <imaginary> - Adds a complex number");
+        System.out.println("subtract <real> <imaginary> - Subtracts a complex number");
+        System.out.println("multiply <real> <imaginary> - Multiplies with a complex number");
+        System.out.println("divide <real> <imaginary> - Divides by a complex number");
+        System.out.println("magnitude - Displays the magnitude of the accumulator");
+        System.out.println("conjugate - Finds the conjugate of the accumulator");
+        System.out.println("exit - Exits the application");
+
+        while (true) {
+            System.out.print("Enter command: ");
+            String input = scanner.nextLine();
+            String[] parts = input.split(" ");
+
+            switch (parts[0].toLowerCase()) {
+                case "add":
+                case "subtract":
+                case "multiply":
+                case "divide":
+                    if (parts.length != 3) {
+                        System.out.println("Invalid command format. Usage: <operation> <real> <imaginary>");
+                        break;
+                    }
+                    double real = Double.parseDouble(parts[1]);
+                    double imaginary = Double.parseDouble(parts[2]);
+                    Complex inputComplex = new Complex(real, imaginary);
+                    switch (parts[0].toLowerCase()) {
+                        case "add":
+                            accumulator = Complex.add(accumulator, inputComplex);
+                            break;
+                        case "subtract":
+                            accumulator = Complex.subtract(accumulator, inputComplex);
+                            break;
+                        case "multiply":
+                            accumulator = Complex.multiply(accumulator, inputComplex);
+                            break;
+                        case "divide":
+                            if (inputComplex.getReal() == 0 && inputComplex.getImaginary() == 0) {
+                                System.out.println("Cannot divide by zero.");
+                                break;
+                            }
+                            accumulator = Complex.divide(accumulator, inputComplex);
+                            break;
+                    }
+                    System.out.println("Accumulator: " + accumulator);
+                    break;
+
+                case "magnitude":
+                    System.out.println("Magnitude: " + accumulator.magnitude());
+                    break;
+
+                case "conjugate":
+                    accumulator = Complex.conjugate(accumulator);
+                    System.out.println("Accumulator (conjugate): " + accumulator);
+                    break;
+
+                case "exit":
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Unknown command. Type 'exit' to quit.");
+            }
+        }
+    }
+}
+
+
+
+Here is a Java implementation for the interactive console application to work with complex numbers as specified. 
+
+### `Complex` Class
+
+This class models a complex number and provides the required operations and methods.
+
+```java
+public final class Complex {
+    private final double real;
+    private final double imaginary;
+
+    public Complex(double real, double imaginary) {
+        this.real = real;
+        this.imaginary = imaginary;
+    }
+
+    public double getReal() {
+        return real;
+    }
+
+    public double getImaginary() {
+        return imaginary;
+    }
+
+    // Instance methods
+    public Complex add(Complex other) {
+        return new Complex(this.real + other.real, this.imaginary + other.imaginary);
+    }
+
+    public Complex subtract(Complex other) {
+        return new Complex(this.real - other.real, this.imaginary - other.imaginary);
+    }
+
+    public Complex multiply(Complex other) {
+        return new Complex(this.real * other.real - this.imaginary * other.imaginary,
+                           this.real * other.imaginary + this.imaginary * other.real);
+    }
+
+    public Complex divide(Complex other) {
+        double denominator = other.real * other.real + other.imaginary * other.imaginary;
+        return new Complex((this.real * other.real + this.imaginary * other.imaginary) / denominator,
+                           (this.imaginary * other.real - this.real * other.imaginary) / denominator);
+    }
+
+    public double magnitude() {
+        return Math.sqrt(real * real + imaginary * imaginary);
+    }
+
+    public double angle() {
+        return Math.atan2(imaginary, real);
+    }
+
+    public Complex conjugate() {
+        return new Complex(this.real, -this.imaginary);
+    }
+
+    // Static methods for overloading
+    public static Complex add(Complex a, Complex b) {
+        return a.add(b);
+    }
+
+    public static Complex subtract(Complex a, Complex b) {
+        return a.subtract(b);
+    }
+
+    public static Complex multiply(Complex a, Complex b) {
+        return a.multiply(b);
+    }
+
+    public static Complex divide(Complex a, Complex b) {
+        return a.divide(b);
+    }
+
+    public static double magnitude(Complex c) {
+        return c.magnitude();
+    }
+
+    public static double angle(Complex c) {
+        return c.angle();
+    }
+
+    public static Complex conjugate(Complex c) {
+        return c.conjugate();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.2f %s %.2fi", real, (imaginary >= 0 ? "+" : "-"), Math.abs(imaginary));
+    }
+}
+```
+
+### `Tester` Class
+
+This class provides the interactive console application for performing operations on `Complex` numbers.
+
+```java
+import java.util.Scanner;
+
+public class Tester {
+    private static Complex accumulator = new Complex(0, 0);
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Complex Number Calculator");
+        System.out.println("Commands:");
+        System.out.println("add <real> <imaginary> - Adds a complex number");
+        System.out.println("subtract <real> <imaginary> - Subtracts a complex number");
+        System.out.println("multiply <real> <imaginary> - Multiplies with a complex number");
+        System.out.println("divide <real> <imaginary> - Divides by a complex number");
+        System.out.println("magnitude - Displays the magnitude of the accumulator");
+        System.out.println("conjugate - Finds the conjugate of the accumulator");
+        System.out.println("exit - Exits the application");
+
+        while (true) {
+            System.out.print("Enter command: ");
+            String input = scanner.nextLine();
+            String[] parts = input.split(" ");
+
+            switch (parts[0].toLowerCase()) {
+                case "add":
+                case "subtract":
+                case "multiply":
+                case "divide":
+                    if (parts.length != 3) {
+                        System.out.println("Invalid command format. Usage: <operation> <real> <imaginary>");
+                        break;
+                    }
+                    double real = Double.parseDouble(parts[1]);
+                    double imaginary = Double.parseDouble(parts[2]);
+                    Complex inputComplex = new Complex(real, imaginary);
+                    switch (parts[0].toLowerCase()) {
+                        case "add":
+                            accumulator = Complex.add(accumulator, inputComplex);
+                            break;
+                        case "subtract":
+                            accumulator = Complex.subtract(accumulator, inputComplex);
+                            break;
+                        case "multiply":
+                            accumulator = Complex.multiply(accumulator, inputComplex);
+                            break;
+                        case "divide":
+                            if (inputComplex.getReal() == 0 && inputComplex.getImaginary() == 0) {
+                                System.out.println("Cannot divide by zero.");
+                                break;
+                            }
+                            accumulator = Complex.divide(accumulator, inputComplex);
+                            break;
+                    }
+                    System.out.println("Accumulator: " + accumulator);
+                    break;
+
+                case "magnitude":
+                    System.out.println("Magnitude: " + accumulator.magnitude());
+                    break;
+
+                case "conjugate":
+                    accumulator = Complex.conjugate(accumulator);
+                    System.out.println("Accumulator (conjugate): " + accumulator);
+                    break;
+
+                case "exit":
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Unknown command. Type 'exit' to quit.");
+            }
+        }
+    }
+}
+```
+
+### Explanation
+1. **`Complex` Class**:
+   - Models a complex number with `real` and `imaginary` parts.
+   - Provides methods to perform arithmetic operations and calculate magnitude, angle, and conjugate.
+   - Includes static methods to perform operations without needing an instance.
+
+2. **`Tester` Class**:
+   - Provides an interactive console for user input.
+   - Executes commands to modify or display the state of the `accumulator` (current complex number).
+   - Handles operations based on user input and prints results.
+
+You can compile and run these classes to interactively work with complex numbers in your console application.
+
+
+
+NUMBER 1
+import javax.swing.JOptionPane;
+
+public class PersonalIncomeTaxCalculator {
+    // Define tax brackets and rates
+    private static final int[][] TAX_BRACKETS = {
+        {0, 25000, 135000, 380000, 800000, 1200000}, // Single
+        {0, 50000, 265000, 520000, 800000, 1200000}, // Married filing jointly or qualified widow(er)
+        {0, 25000, 135000, 330000, 700000, 1200000}, // Married filing separately
+        {0, 35000, 165000, 420000, 650000, 1200000}  // Head of Household
+    };
+
+    private static final double[][] TAX_RATES = {
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Single
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Married filing jointly or qualified widow(er)
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Married filing separately
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}  // Head of Household
+    };
+
+    public static void main(String[] args) {
+        try {
+            // Get user input
+            String input = JOptionPane.showInputDialog("Enter filing status and taxable income (e.g., 1,35000):");
+            if (input == null) {
+                return; // Exit if dialog is cancelled
+            }
+
+            String[] inputs = input.split(",");
+            int status = Integer.parseInt(inputs[0].trim());
+            int income = Integer.parseInt(inputs[1].trim());
+
+            if (status == 0 && income == 0) {
+                // Display the complete tax income table
+                displayTaxTable();
+            } else if (status == 0) {
+                // Display the filing status based on income
+                System.out.println("Filing status for income " + income + " is: ");
+                for (int i = 0; i < TAX_BRACKETS.length; i++) {
+                    if (isInBracket(i, income)) {
+                        System.out.println(i + 1);
+                    }
+                }
+            } else if (status == 5) {
+                // Display tax payable in intervals of 10,000
+                displayTaxInIntervals(income);
+            } else if (status >= 1 && status <= 4) {
+                // Calculate tax for a specific status
+                double tax = calculateTax(status - 1, income);
+                System.out.println("Your tax for filing status " + status + " with taxable income of " + income + " naira is " + tax);
+            } else {
+                // Handle error
+                System.out.println("Invalid filing status.");
+            }
+        } catch (Exception e) {
+            // Handle errors
+            System.out.println("Error processing input. Please ensure you enter valid numbers.");
+        }
+    }
+
+    private static boolean isInBracket(int status, int income) {
+        int[] brackets = TAX_BRACKETS[status];
+        for (int i = 0; i < brackets.length; i++) {
+            if (income <= brackets[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static double calculateTax(int status, int income) {
+        double tax = 0;
+        int[] brackets = TAX_BRACKETS[status];
+        double[] rates = TAX_RATES[status];
+        int prevBracket = 0;
+
+        for (int i = 0; i < brackets.length; i++) {
+            if (income > brackets[i]) {
+                tax += (brackets[i] - prevBracket) * rates[i];
+                prevBracket = brackets[i];
+            } else {
+                tax += (income - prevBracket) * rates[i];
+                return tax;
+            }
+        }
+        return tax;
+    }
+
+    private static void displayTaxTable() {
+        StringBuilder table = new StringBuilder("Filing Status | Income Brackets | Tax Rates\n");
+        String[] statuses = {"Single", "Married filing jointly or Qualified Widow(er)", "Married filing Separately", "Head of Household"};
+        for (int i = 0; i < TAX_BRACKETS.length; i++) {
+            table.append(statuses[i]).append("\n");
+            for (int j = 0; j < TAX_BRACKETS[i].length; j++) {
+                table.append("Up to ").append(TAX_BRACKETS[i][j]).append(": ").append(TAX_RATES[i][j] * 100).append("%\n");
+            }
+            table.append("\n");
+        }
+        System.out.println(table);
+    }
+
+    private static void displayTaxInIntervals(int income) {
+        for (int i = 0; i < TAX_BRACKETS.length; i++) {
+            int[] brackets = TAX_BRACKETS[i];
+            double[] rates = TAX_RATES[i];
+            System.out.println("Filing Status " + (i + 1) + ":");
+            for (int bracketStart = 0; bracketStart <= income; bracketStart += 10000) {
+                int bracketEnd = Math.min(bracketStart + 10000, income);
+                double tax = calculateTax(i, bracketEnd) - calculateTax(i, bracketStart);
+                System.out.printf("Income from %d to %d: Tax = %.2f\n", bracketStart, bracketEnd, tax);
+            }
+            System.out.println();
+        }
+    }
+}
+
+
+To develop the Java program for computing personal income tax based on the given specifications, we need to follow these steps:
+
+1. **Define Tax Brackets and Rates:** Represent the tax brackets and rates for each filing status.
+2. **Handle User Input:** Use dialog boxes to prompt users for input and parse the inputs.
+3. **Calculate Tax:** Based on the given tax brackets and rates, compute the tax payable.
+4. **Output Results:** Display the results based on the user's input, including handling specific cases like displaying tax for multiple statuses or error handling.
+
+Here's the Java code implementing the requirements:
+
+```java
+import javax.swing.JOptionPane;
+
+public class PersonalIncomeTaxCalculator {
+    // Define tax brackets and rates
+    private static final int[][] TAX_BRACKETS = {
+        {0, 25000, 135000, 380000, 800000, 1200000}, // Single
+        {0, 50000, 265000, 520000, 800000, 1200000}, // Married filing jointly or qualified widow(er)
+        {0, 25000, 135000, 330000, 700000, 1200000}, // Married filing separately
+        {0, 35000, 165000, 420000, 650000, 1200000} // Head of Household
+    };
+
+    private static final double[][] TAX_RATES = {
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Single
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Married filing jointly or qualified widow(er)
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38}, // Married filing separately
+        {0.10, 0.15, 0.20, 0.25, 0.30, 0.34, 0.38} // Head of Household
+    };
+
+    public static void main(String[] args) {
+        try {
+            // Get user input
+            String input = JOptionPane.showInputDialog("Enter filing status and taxable income (e.g., 1,35000):");
+            if (input == null) {
+                return; // Exit if dialog is cancelled
+            }
+
+            String[] inputs = input.split(",");
+            int status = Integer.parseInt(inputs[0].trim());
+            int income = Integer.parseInt(inputs[1].trim());
+
+            if (status == 0 && income == 0) {
+                // Display the complete tax income table
+                displayTaxTable();
+            } else if (status == 0) {
+                // Display the filing status based on income
+                System.out.println("Filing status for income " + income + " is: ");
+                for (int i = 0; i < TAX_BRACKETS.length; i++) {
+                    if (isInBracket(i, income)) {
+                        System.out.println(i + 1);
+                    }
+                }
+            } else if (status == 5) {
+                // Display tax payable in intervals of 10,000
+                displayTaxInIntervals(income);
+            } else if (status >= 1 && status <= 4) {
+                // Calculate tax for a specific status
+                double tax = calculateTax(status - 1, income);
+                System.out.println("Your tax for filing status " + status + " with taxable income of " + income + " naira is " + tax);
+            } else {
+                // Handle error
+                System.out.println("Invalid filing status.");
+            }
+        } catch (Exception e) {
+            // Handle errors
+            System.out.println("Error processing input. Please ensure you enter valid numbers.");
+        }
+    }
+
+    private static boolean isInBracket(int status, int income) {
+        int[] brackets = TAX_BRACKETS[status];
+        for (int i = 0; i < brackets.length; i++) {
+            if (income <= brackets[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static double calculateTax(int status, int income) {
+        double tax = 0;
+        int[] brackets = TAX_BRACKETS[status];
+        double[] rates = TAX_RATES[status];
+        int prevBracket = 0;
+
+        for (int i = 0; i < brackets.length; i++) {
+            if (income > brackets[i]) {
+                tax += (brackets[i] - prevBracket) * rates[i];
+                prevBracket = brackets[i];
+            } else {
+                tax += (income - prevBracket) * rates[i];
+                return tax;
+            }
+        }
+        return tax;
+    }
+
+    private static void displayTaxTable() {
+        StringBuilder table = new StringBuilder("Filing Status | Income Brackets | Tax Rates\n");
+        String[] statuses = {"Single", "Married filing jointly or Qualified Widow(er)", "Married filing Separately", "Head of Household"};
+        for (int i = 0; i < TAX_BRACKETS.length; i++) {
+            table.append(statuses[i]).append("\n");
+            for (int j = 0; j < TAX_BRACKETS[i].length; j++) {
+                table.append("Up to ").append(TAX_BRACKETS[i][j]).append(": ").append(TAX_RATES[i][j] * 100).append("%\n");
+            }
+            table.append("\n");
+        }
+        System.out.println(table);
+    }
+
+    private static void displayTaxInIntervals(int income) {
+        for (int i = 0; i < TAX_BRACKETS.length; i++) {
+            int[] brackets = TAX_BRACKETS[i];
+            double[] rates = TAX_RATES[i];
+            System.out.println("Filing Status " + (i + 1) + ":");
+            for (int bracketStart = 0; bracketStart <= income; bracketStart += 10000) {
+                int bracketEnd = Math.min(bracketStart + 10000, income);
+                double tax = calculateTax(i, bracketEnd) - calculateTax(i, bracketStart);
+                System.out.printf("Income from %d to %d: Tax = %.2f\n", bracketStart, bracketEnd, tax);
+            }
+            System.out.println();
+        }
+    }
+}
+```
+
+### Explanation:
+1. **Tax Brackets and Rates:** Arrays are used to store the tax brackets and corresponding rates for different filing statuses.
+2. **User Input:** Dialog boxes (`JOptionPane`) are used for input. The input is split and parsed to extract filing status and taxable income.
+3. **Tax Calculation:**
+   - **`calculateTax(int status, int income)`**: Computes the tax based on the income and filing status.
+   - **`isInBracket(int status, int income)`**: Determines if a given income falls within the brackets for a particular status.
+4. **Error Handling:** Catches and handles exceptions for invalid inputs.
+5. **Output Display:**
+   - **`displayTaxTable()`**: Shows a complete table of income brackets and tax rates.
+   - **`displayTaxInIntervals(int income)`**: Shows tax payable in intervals of 10,000.
+
+This program covers all the required functionalities and ensures proper error handling and user interaction.
